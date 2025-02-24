@@ -194,7 +194,7 @@ export default function ImageGenerator() {
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="flex items-center justify-center gap-2 mb-8">
           <HeartHandshake className="h-8 w-8 text-pink-500" />
-          <h1 className="text-3xl font-bold text-center">Bildkreatören</h1>
+          <h1 className="text-3xl font-bold text-center">Abanza</h1>
         </div>
 
         <Card className="mb-8 border-pink-100 dark:border-pink-900">
