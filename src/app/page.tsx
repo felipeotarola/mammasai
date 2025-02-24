@@ -21,7 +21,7 @@ import {
   SelectLabel,
 } from "@/components/ui/select"
 import Link from "next/link"
-import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Download, Expand } from "lucide-react"
 import { toast } from "sonner"
 
@@ -513,35 +513,42 @@ export default function ImageGenerator() {
         )}
       </div>
       <Dialog open={!!expandedImage} onOpenChange={() => setExpandedImage(null)}>
-        <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 overflow-hidden">
-          {expandedImage && (
-            <div className="relative flex flex-col h-full">
-              <div className="relative w-full h-full max-h-[80vh] flex items-center justify-center bg-black/5">
+      <DialogContent className="max-w-[95vw] max-h-[95vh] p-0">
+        <DialogHeader className="sr-only">
+          <DialogTitle>Expanderad bild</DialogTitle>
+          <DialogDescription>En större version av den valda bilden</DialogDescription>
+        </DialogHeader>
+        {expandedImage && (
+          <div className="relative flex flex-col max-h-[90vh]">
+            <div className="relative flex items-center justify-center bg-black/5 p-4">
+              <div className="relative w-full max-h-[70vh]" style={{ aspectRatio: "1/1" }}>
                 <Image
                   src={expandedImage.url || "/placeholder.svg"}
                   alt={expandedImage.prompt}
                   fill
                   className="object-contain"
                   sizes="(max-width: 1200px) 95vw, 1200px"
+                  priority
                 />
               </div>
-              <div className="absolute top-2 right-2 z-10">
-                <Button
-                  variant="secondary"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => handleDownload(expandedImage.url, expandedImage.prompt)}
-                >
-                  <Download className="h-4 w-4" />
-                </Button>
-              </div>
-              <div className="p-4 bg-background/80 backdrop-blur-sm">
-                <p className="text-sm text-muted-foreground">{expandedImage.prompt}</p>
-              </div>
             </div>
-          )}
-        </DialogContent>
-      </Dialog>
+            <div className="absolute top-2 right-2 flex gap-2">
+              <Button
+                variant="secondary"
+                size="icon"
+                className="h-8 w-8 bg-white/80 hover:bg-white/90"
+                onClick={() => handleDownload(expandedImage.url, expandedImage.prompt)}
+              >
+                <Download className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="p-4 bg-background/80 backdrop-blur-sm border-t">
+              <p className="text-sm text-muted-foreground">{expandedImage.prompt}</p>
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
     </div>
   )
 }
