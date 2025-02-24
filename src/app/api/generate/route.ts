@@ -21,6 +21,7 @@ export async function POST(req: Request) {
     // Combine the system prompt and user prompt
     const combinedPrompt = systemPrompt ? `${systemPrompt} Create this: ${prompt}` : prompt
 
+    console.log("Generating image with prompt:", combinedPrompt)
     const { image } = await generateImage({
       model: openai.image("dall-e-3"),
       prompt: combinedPrompt,
