@@ -11,13 +11,28 @@ import { Loader2, Wand2, ChevronDown, ChevronUp, Settings2, HeartHandshake, Spar
 import Image from "next/image"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  SelectGroup,
+  SelectLabel,
+} from "@/components/ui/select"
+import Link from "next/link"
 
 interface GeneratedImage {
   id: string
   prompt: string
   imageUrl: string
   createdAt: string
+}
+
+interface StyleTemplate {
+  id: string
+  name: string
+  prompt: string
 }
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
@@ -35,42 +50,42 @@ const PREDEFINED_STYLES = [
     prompt:
       "Skapa en mjuk och luftig akvarellmålning med subtila färgövergångar och ett drömliknande uttryck. Använd ljusa, flytande färger och låt dem smälta samman naturligt.",
   },
-  {
-    id: "oil-painting",
-    name: "Oljemålning",
-    prompt:
-      "Skapa en rik och texturerad oljemålning med djupa färger och tydliga penseldrag. Fokusera på ljus och skugga för att skapa djup och dimension.",
-  },
-  {
-    id: "impressionist",
-    name: "Impressionistisk",
-    prompt:
-      "Måla i impressionistisk stil, med små, synliga penseldrag och fokus på ljusets effekter. Fånga stämningen och atmosfären snarare än exakta detaljer.",
-  },
-  {
-    id: "folk-art",
-    name: "Folkkonst",
-    prompt:
-      "Skapa en glad och färgglad bild i skandinavisk folkkonststil. Använd starka färger, dekorativa mönster och förenklade former.",
-  },
-  {
-    id: "realistic",
-    name: "Realistisk",
-    prompt:
-      "Skapa en fotorealistisk bild med exakta detaljer och naturlig ljussättning. Fokusera på att återge texturer och material på ett verklighetstroget sätt.",
-  },
-  {
-    id: "children-book",
-    name: "Barnboksillustration",
-    prompt:
-      "Skapa en glad och inbjudande barnboksillustration med mjuka former och varma färger. Gör bilden lekfull och fantasifull.",
-  },
-  {
-    id: "vintage",
-    name: "Vintage",
-    prompt:
-      "Skapa en bild med vintage-känsla från 50-60-talet. Använd dova färger och retro-element för att fånga den tidstypiska stilen.",
-  },
+  // {
+  //   id: "oil-painting",
+  //   name: "Oljemålning",
+  //   prompt:
+  //     "Skapa en rik och texturerad oljemålning med djupa färger och tydliga penseldrag. Fokusera på ljus och skugga för att skapa djup och dimension.",
+  // },
+  // {
+  //   id: "impressionist",
+  //   name: "Impressionistisk",
+  //   prompt:
+  //     "Måla i impressionistisk stil, med små, synliga penseldrag och fokus på ljusets effekter. Fånga stämningen och atmosfären snarare än exakta detaljer.",
+  // },
+  // {
+  //   id: "folk-art",
+  //   name: "Folkkonst",
+  //   prompt:
+  //     "Skapa en glad och färgglad bild i skandinavisk folkkonststil. Använd starka färger, dekorativa mönster och förenklade former.",
+  // },
+  // {
+  //   id: "realistic",
+  //   name: "Realistisk",
+  //   prompt:
+  //     "Skapa en fotorealistisk bild med exakta detaljer och naturlig ljussättning. Fokusera på att återge texturer och material på ett verklighetstroget sätt.",
+  // },
+  // {
+  //   id: "children-book",
+  //   name: "Barnboksillustration",
+  //   prompt:
+  //     "Skapa en glad och inbjudande barnboksillustration med mjuka former och varma färger. Gör bilden lekfull och fantasifull.",
+  // },
+  // {
+  //   id: "vintage",
+  //   name: "Vintage",
+  //   prompt:
+  //     "Skapa en bild med vintage-känsla från 50-60-talet. Använd dova färger och retro-element för att fånga den tidstypiska stilen.",
+  // },
 ]
 
 const DEFAULT_SYSTEM_PROMPT = PREDEFINED_STYLES[0].prompt
@@ -102,6 +117,8 @@ export default function ImageGenerator() {
     revalidateOnFocus: false,
   })
 
+  const { data: customTemplates } = useSWR<{ templates: StyleTemplate[] }>("/api/style-templates", fetcher)
+
   const togglePrompt = (imageId: string) => {
     setExpandedPrompts((prev) => ({
       ...prev,
@@ -115,10 +132,19 @@ export default function ImageGenerator() {
 
   // Handle style selection
   const handleStyleChange = (styleId: string) => {
-    const style = PREDEFINED_STYLES.find((s) => s.id === styleId)
-    if (style) {
-      setSelectedStyle(styleId)
-      setSystemPrompt(style.prompt)
+    if (styleId.startsWith("custom-")) {
+      const templateId = styleId.replace("custom-", "")
+      const template = customTemplates?.templates.find((t) => t.id === templateId)
+      if (template) {
+        setSelectedStyle(styleId)
+        setSystemPrompt(template.prompt)
+      }
+    } else {
+      const style = PREDEFINED_STYLES.find((s) => s.id === styleId)
+      if (style) {
+        setSelectedStyle(styleId)
+        setSystemPrompt(style.prompt)
+      }
     }
   }
 
@@ -197,6 +223,15 @@ export default function ImageGenerator() {
                 </TooltipProvider>
               </div>
 
+              <div className="flex items-center justify-between mb-2">
+                <Link href="/style-templates">
+                  <Button variant="ghost" size="sm" className="text-muted-foreground">
+                    <Settings2 className="h-4 w-4 mr-2" />
+                    Hantera Stilmallar
+                  </Button>
+                </Link>
+              </div>
+
               {/* System Prompt */}
               <Collapsible open={showSystemPrompt}>
                 <CollapsibleContent className="space-y-4">
@@ -211,11 +246,24 @@ export default function ImageGenerator() {
                         <SelectValue placeholder="Välj en stil" />
                       </SelectTrigger>
                       <SelectContent>
-                        {PREDEFINED_STYLES.map((style) => (
-                          <SelectItem key={style.id} value={style.id}>
-                            {style.name}
-                          </SelectItem>
-                        ))}
+                        <SelectGroup>
+                          <SelectLabel>Fördefinierade Stilar</SelectLabel>
+                          {PREDEFINED_STYLES.map((style) => (
+                            <SelectItem key={style.id} value={style.id}>
+                              {style.name}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                        {(customTemplates?.templates?.length ?? 0) > 0 && (
+                          <SelectGroup>
+                            <SelectLabel>Mina Stilar</SelectLabel>
+                            {customTemplates?.templates?.map((template) => (
+                              <SelectItem key={template.id} value={`custom-${template.id}`}>
+                                {template.name}
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
+                        )}
                       </SelectContent>
                     </Select>
 
