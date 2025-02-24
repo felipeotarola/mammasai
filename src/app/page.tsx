@@ -7,7 +7,7 @@ import useSWR, { mutate } from "swr"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Loader2, Wand2, ChevronDown, ChevronUp, Settings2, HeartHandshake, Sparkles, Palette } from "lucide-react"
+import { Loader2, Wand2, ChevronDown, ChevronUp, Settings2, HeartHandshake, Sparkles, Palette, Trash } from "lucide-react"
 import Image from "next/image"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
@@ -23,6 +23,7 @@ import {
 import Link from "next/link"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { Download, Expand } from "lucide-react"
+import { toast } from "sonner"
 
 interface GeneratedImage {
   id: string
@@ -167,6 +168,24 @@ export default function ImageGenerator() {
     }
   }, [isGenerating])
 
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Är du säker på att du vill ta bort denna mall?")) return
+
+    try {
+      const response = await fetch(`/api/images/${id}`, {
+        method: "DELETE",
+      })
+
+      if (!response.ok) throw new Error("Något gick fel")
+      mutate("/api/generate")
+      toast.success("Bilden har tagits bort!")
+      mutate("/api/style-templates")
+    } catch (error) {
+      toast.error("Kunde inte ta bort bilden. Försök igen.")
+    }
+  }
+  
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setIsGenerating(true)
@@ -395,50 +414,73 @@ export default function ImageGenerator() {
                   />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200 rounded-lg" />
                   <div className="absolute bottom-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="secondary"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleDownload(image.imageUrl, image.prompt)
-                            }}
-                          >
-                            <Download className="h-4 w-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Ladda ner bild</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="secondary"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() =>
-                              setExpandedImage({
-                                id: image.id,
-                                url: image.imageUrl,
-                                prompt: image.prompt,
-                              })
-                            }
-                          >
-                            <Expand className="h-4 w-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Visa större bild</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
+  <TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          variant="secondary"
+          size="icon"
+          className="h-8 w-8"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleDownload(image.imageUrl, image.prompt);
+          }}
+        >
+          <Download className="h-4 w-4" />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>Ladda ner bild</p>
+      </TooltipContent>
+    </Tooltip>
+  </TooltipProvider>
+
+  <TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          variant="secondary"
+          size="icon"
+          className="h-8 w-8"
+          onClick={() =>
+            setExpandedImage({
+              id: image.id,
+              url: image.imageUrl,
+              prompt: image.prompt,
+            })
+          }
+        >
+          <Expand className="h-4 w-4" />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>Visa större bild</p>
+      </TooltipContent>
+    </Tooltip>
+  </TooltipProvider>
+
+  <TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          variant="destructive"
+          size="icon"
+          className="h-8 w-8"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleDelete(image.id);
+          }}
+        >
+          <Trash className="h-4 w-4" />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>Ta bort bild</p>
+      </TooltipContent>
+    </Tooltip>
+  </TooltipProvider>
+</div>
+
                 </div>
 
                 <Collapsible open={expandedPrompts[image.id]}>

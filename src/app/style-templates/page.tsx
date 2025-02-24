@@ -83,7 +83,7 @@ export default function StyleTemplates() {
       if (!response.ok) throw new Error("Något gick fel")
 
       toast.success("Mallen har tagits bort!")
-      mutate("/api/templates")
+      mutate("/api/style-templates")
     } catch (error) {
       toast.error("Kunde inte ta bort mallen. Försök igen.")
     }
@@ -206,7 +206,7 @@ export default function StyleTemplates() {
 
         {templates?.templates.length === 0 && (
           <div className="text-center py-8 text-muted-foreground">
-            Inga mallar skapade än. Skapa din första mall genom att klicka på "Ny Stilmall"!
+            Inga mallar skapade än. Skapa din första mall genom att klicka på &apos;Ny Stilmall&apos;!
           </div>
         )}
       </div>
