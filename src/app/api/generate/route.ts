@@ -11,6 +11,9 @@ function sanitizeFilename(name: string): string {
       .replace(/-+/g, "-")
       .replace(/^-|-$/g, "")
   }
+  export const maxDuration = 300;
+
+  
 export async function POST(req: Request) {
   try {
     const { prompt, systemPrompt } = await req.json()
