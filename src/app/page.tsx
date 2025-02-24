@@ -21,6 +21,8 @@ import {
   SelectLabel,
 } from "@/components/ui/select"
 import Link from "next/link"
+import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { Download, Expand } from "lucide-react"
 
 interface GeneratedImage {
   id: string
@@ -32,6 +34,12 @@ interface GeneratedImage {
 interface StyleTemplate {
   id: string
   name: string
+  prompt: string
+}
+
+interface ExpandedImage {
+  id: string
+  url: string
   prompt: string
 }
 
@@ -50,42 +58,42 @@ const PREDEFINED_STYLES = [
     prompt:
       "Skapa en mjuk och luftig akvarellmålning med subtila färgövergångar och ett drömliknande uttryck. Använd ljusa, flytande färger och låt dem smälta samman naturligt.",
   },
-  // {
-  //   id: "oil-painting",
-  //   name: "Oljemålning",
-  //   prompt:
-  //     "Skapa en rik och texturerad oljemålning med djupa färger och tydliga penseldrag. Fokusera på ljus och skugga för att skapa djup och dimension.",
-  // },
-  // {
-  //   id: "impressionist",
-  //   name: "Impressionistisk",
-  //   prompt:
-  //     "Måla i impressionistisk stil, med små, synliga penseldrag och fokus på ljusets effekter. Fånga stämningen och atmosfären snarare än exakta detaljer.",
-  // },
-  // {
-  //   id: "folk-art",
-  //   name: "Folkkonst",
-  //   prompt:
-  //     "Skapa en glad och färgglad bild i skandinavisk folkkonststil. Använd starka färger, dekorativa mönster och förenklade former.",
-  // },
-  // {
-  //   id: "realistic",
-  //   name: "Realistisk",
-  //   prompt:
-  //     "Skapa en fotorealistisk bild med exakta detaljer och naturlig ljussättning. Fokusera på att återge texturer och material på ett verklighetstroget sätt.",
-  // },
-  // {
-  //   id: "children-book",
-  //   name: "Barnboksillustration",
-  //   prompt:
-  //     "Skapa en glad och inbjudande barnboksillustration med mjuka former och varma färger. Gör bilden lekfull och fantasifull.",
-  // },
-  // {
-  //   id: "vintage",
-  //   name: "Vintage",
-  //   prompt:
-  //     "Skapa en bild med vintage-känsla från 50-60-talet. Använd dova färger och retro-element för att fånga den tidstypiska stilen.",
-  // },
+  {
+    id: "oil-painting",
+    name: "Oljemålning",
+    prompt:
+      "Skapa en rik och texturerad oljemålning med djupa färger och tydliga penseldrag. Fokusera på ljus och skugga för att skapa djup och dimension.",
+  },
+  {
+    id: "impressionist",
+    name: "Impressionistisk",
+    prompt:
+      "Måla i impressionistisk stil, med små, synliga penseldrag och fokus på ljusets effekter. Fånga stämningen och atmosfären snarare än exakta detaljer.",
+  },
+  {
+    id: "folk-art",
+    name: "Folkkonst",
+    prompt:
+      "Skapa en glad och färgglad bild i skandinavisk folkkonststil. Använd starka färger, dekorativa mönster och förenklade former.",
+  },
+  {
+    id: "realistic",
+    name: "Realistisk",
+    prompt:
+      "Skapa en fotorealistisk bild med exakta detaljer och naturlig ljussättning. Fokusera på att återge texturer och material på ett verklighetstroget sätt.",
+  },
+  {
+    id: "children-book",
+    name: "Barnboksillustration",
+    prompt:
+      "Skapa en glad och inbjudande barnboksillustration med mjuka former och varma färger. Gör bilden lekfull och fantasifull.",
+  },
+  {
+    id: "vintage",
+    name: "Vintage",
+    prompt:
+      "Skapa en bild med vintage-känsla från 50-60-talet. Använd dova färger och retro-element för att fånga den tidstypiska stilen.",
+  },
 ]
 
 const DEFAULT_SYSTEM_PROMPT = PREDEFINED_STYLES[0].prompt
@@ -107,6 +115,7 @@ export default function ImageGenerator() {
   const [expandedPrompts, setExpandedPrompts] = useState<Record<string, boolean>>({})
   const [encouragingMessageIndex, setEncouragingMessageIndex] = useState(0)
   const [selectedStyle, setSelectedStyle] = useState<string>("default")
+  const [expandedImage, setExpandedImage] = useState<ExpandedImage | null>(null)
 
   const {
     data,
@@ -189,12 +198,32 @@ export default function ImageGenerator() {
     }
   }
 
+  const handleDownload = async (imageUrl: string, prompt: string) => {
+    try {
+      const response = await fetch(imageUrl)
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `bild-${prompt
+        .slice(0, 30)
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, "-")}.png`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+    } catch (error) {
+      console.error("Error downloading image:", error)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-pink-50 to-white dark:from-gray-900 dark:to-gray-950">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="flex items-center justify-center gap-2 mb-8">
           <HeartHandshake className="h-8 w-8 text-pink-500" />
-          <h1 className="text-3xl font-bold text-center">Abanza</h1>
+          <h1 className="text-3xl font-bold text-center">Bildkreatören</h1>
         </div>
 
         <Card className="mb-8 border-pink-100 dark:border-pink-900">
@@ -254,10 +283,10 @@ export default function ImageGenerator() {
                             </SelectItem>
                           ))}
                         </SelectGroup>
-                        {(customTemplates?.templates?.length ?? 0) > 0 && (
+                        {customTemplates && customTemplates.templates.length > 0 && (
                           <SelectGroup>
                             <SelectLabel>Mina Stilar</SelectLabel>
-                            {customTemplates?.templates?.map((template) => (
+                            {customTemplates.templates.map((template) => (
                               <SelectItem key={template.id} value={`custom-${template.id}`}>
                                 {template.name}
                               </SelectItem>
@@ -350,13 +379,66 @@ export default function ImageGenerator() {
               className="overflow-hidden hover:shadow-lg transition-shadow duration-200 border-pink-100 dark:border-pink-900"
             >
               <CardContent className="p-2">
-                <div className="relative aspect-square">
+                <div className="relative aspect-square group">
                   <Image
                     src={image.imageUrl || "/placeholder.svg"}
                     alt={image.prompt}
                     fill
-                    className="object-cover rounded-lg"
+                    className="object-cover rounded-lg cursor-pointer transition-transform duration-200 group-hover:scale-[1.02]"
+                    onClick={() =>
+                      setExpandedImage({
+                        id: image.id,
+                        url: image.imageUrl,
+                        prompt: image.prompt,
+                      })
+                    }
                   />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200 rounded-lg" />
+                  <div className="absolute bottom-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="secondary"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleDownload(image.imageUrl, image.prompt)
+                            }}
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Ladda ner bild</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="secondary"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() =>
+                              setExpandedImage({
+                                id: image.id,
+                                url: image.imageUrl,
+                                prompt: image.prompt,
+                              })
+                            }
+                          >
+                            <Expand className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Visa större bild</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
                 </div>
 
                 <Collapsible open={expandedPrompts[image.id]}>
@@ -388,6 +470,36 @@ export default function ImageGenerator() {
           </div>
         )}
       </div>
+      <Dialog open={!!expandedImage} onOpenChange={() => setExpandedImage(null)}>
+        <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 overflow-hidden">
+          {expandedImage && (
+            <div className="relative flex flex-col h-full">
+              <div className="relative w-full h-full max-h-[80vh] flex items-center justify-center bg-black/5">
+                <Image
+                  src={expandedImage.url || "/placeholder.svg"}
+                  alt={expandedImage.prompt}
+                  fill
+                  className="object-contain"
+                  sizes="(max-width: 1200px) 95vw, 1200px"
+                />
+              </div>
+              <div className="absolute top-2 right-2 z-10">
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => handleDownload(expandedImage.url, expandedImage.prompt)}
+                >
+                  <Download className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="p-4 bg-background/80 backdrop-blur-sm">
+                <p className="text-sm text-muted-foreground">{expandedImage.prompt}</p>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
