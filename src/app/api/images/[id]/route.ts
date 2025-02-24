@@ -1,9 +1,13 @@
-import { del } from "@vercel/blob"
-import { PrismaClient } from "@prisma/client"
+import { NextRequest } from 'next/server'
+import { del } from '@vercel/blob'
+import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
     // Get the image from the database
     const image = await prisma.image.findUnique({
@@ -11,7 +15,9 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
     })
 
     if (!image) {
-      return Response.json({ error: "Image not found" }, { status: 404 })
+      return new Response(JSON.stringify({ error: 'Image not found' }), {
+        status: 404,
+      })
     }
 
     // Delete from Vercel Blob using the pathname
@@ -22,10 +28,11 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
       where: { id: params.id },
     })
 
-    return Response.json({ success: true })
+    return new Response(JSON.stringify({ success: true }), { status: 200 })
   } catch (error) {
-    console.error("Error deleting image:", error)
-    return Response.json({ error: "Failed to delete image" }, { status: 500 })
+    console.error('Error deleting image:', error)
+    return new Response(JSON.stringify({ error: 'Failed to delete image' }), {
+      status: 500,
+    })
   }
 }
-
