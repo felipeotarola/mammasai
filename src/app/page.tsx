@@ -7,8 +7,9 @@ import useSWR, { mutate } from "swr"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Loader2, Wand2 } from "lucide-react"
+import { ChevronDown, ChevronUp, Loader2, Wand2 } from "lucide-react"
 import Image from "next/image"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 
 interface GeneratedImage {
   id: string
@@ -24,6 +25,7 @@ export default function ImageGenerator() {
   const [prompt, setPrompt] = useState("")
   const [isGenerating, setIsGenerating] = useState(false)
   const [error, setError] = useState("")
+  const [expandedPrompts, setExpandedPrompts] = useState<Record<string, boolean>>({})
 
   // Use SWR to fetch images
   const {
@@ -35,6 +37,13 @@ export default function ImageGenerator() {
     revalidateOnFocus: false,
   })
 
+  const togglePrompt = (imageId: string) => {
+    setExpandedPrompts((prev) => ({
+      ...prev,
+      [imageId]: !prev[imageId],
+    }))
+  }
+  
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setIsGenerating(true)
@@ -120,6 +129,23 @@ export default function ImageGenerator() {
                   className="object-cover rounded-lg transition-transform group-hover:scale-105"
                 />
               </div>
+              <Collapsible open={expandedPrompts[image.id]}>
+                <div className="flex items-center justify-between p-2">
+                  <p className="text-sm text-muted-foreground line-clamp-1 flex-1 mr-2">{image.prompt}</p>
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" size="sm" onClick={() => togglePrompt(image.id)}>
+                      {expandedPrompts[image.id] ? (
+                        <ChevronUp className="h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </CollapsibleTrigger>
+                </div>
+                <CollapsibleContent className="px-2 pb-2">
+                  <p className="text-sm text-muted-foreground">{image.prompt}</p>
+                </CollapsibleContent>
+              </Collapsible>
               <p className="mt-2 text-sm text-muted-foreground line-clamp-2 p-2">{image.prompt}</p>
             </CardContent>
           </Card>

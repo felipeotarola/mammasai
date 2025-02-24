@@ -3,6 +3,7 @@ import { openai } from "@ai-sdk/openai"
 import { PrismaClient } from "@prisma/client"
 
 const prisma = new PrismaClient()
+export const maxDuration = 300;
 
 export async function POST(req: Request) {
   try {
