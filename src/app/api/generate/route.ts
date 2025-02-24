@@ -27,6 +27,8 @@ function withTimeout<T>(promise: Promise<T>, timeoutMillis: number): Promise<T> 
     ),
   ])
 }
+export const maxDuration = 300; // 5 minutes
+
 
 export async function POST(req: Request) {
   try {
