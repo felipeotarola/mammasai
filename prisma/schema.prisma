@@ -10,7 +10,8 @@ datasource db {
 model Image {
   id        String   @id @default(cuid())
   prompt    String
-  imageUrl  String
+  imageUrl  String   // This will store the Vercel Blob URL
+  blobId    String   // Store the Blob ID for potential deletion later
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
