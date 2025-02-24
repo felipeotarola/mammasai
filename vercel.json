@@ -1,6 +1,6 @@
 {
     "functions": {
-      "app/api/generate/route.ts": {
+      "src/app/api/generate/route.ts": {
         "maxDuration": 300
       }
     }
