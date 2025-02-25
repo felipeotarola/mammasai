@@ -78,48 +78,6 @@ const PREDEFINED_STYLES = [
     prompt:
       "Du är en professionell konstnär. Skapa en mycket detaljerad bild av hög kvalitet med följande beskrivning:",
   },
-  // {
-  //   id: "watercolor",
-  //   name: "Akvarell",
-  //   prompt:
-  //     "Skapa en mjuk och luftig akvarellmålning med subtila färgövergångar och ett drömliknande uttryck. Använd ljusa, flytande färger och låt dem smälta samman naturligt.",
-  // },
-  // {
-  //   id: "oil-painting",
-  //   name: "Oljemålning",
-  //   prompt:
-  //     "Skapa en rik och texturerad oljemålning med djupa färger och tydliga penseldrag. Fokusera på ljus och skugga för att skapa djup och dimension.",
-  // },
-  // {
-  //   id: "impressionist",
-  //   name: "Impressionistisk",
-  //   prompt:
-  //     "Måla i impressionistisk stil, med små, synliga penseldrag och fokus på ljusets effekter. Fånga stämningen och atmosfären snarare än exakta detaljer.",
-  // },
-  // {
-  //   id: "folk-art",
-  //   name: "Folkkonst",
-  //   prompt:
-  //     "Skapa en glad och färgglad bild i skandinavisk folkkonststil. Använd starka färger, dekorativa mönster och förenklade former.",
-  // },
-  // {
-  //   id: "realistic",
-  //   name: "Realistisk",
-  //   prompt:
-  //     "Skapa en fotorealistisk bild med exakta detaljer och naturlig ljussättning. Fokusera på att återge texturer och material på ett verklighetstroget sätt.",
-  // },
-  // {
-  //   id: "children-book",
-  //   name: "Barnboksillustration",
-  //   prompt:
-  //     "Skapa en glad och inbjudande barnboksillustration med mjuka former och varma färger. Gör bilden lekfull och fantasifull.",
-  // },
-  // {
-  //   id: "vintage",
-  //   name: "Vintage",
-  //   prompt:
-  //     "Skapa en bild med vintage-känsla från 50-60-talet. Använd dova färger och retro-element för att fånga den tidstypiska stilen.",
-  // },
 ];
 
 const DEFAULT_SYSTEM_PROMPT = PREDEFINED_STYLES[0].prompt;
@@ -273,8 +231,8 @@ export default function ImageGenerator() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-pink-50 to-white dark:from-gray-900 dark:to-gray-950">
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <div className="bg-gradient-to-b from-pink-50 to-white dark:from-gray-900 dark:to-gray-950 min-h-screen">
+      <div className="px-4 py-8">
         <div className="flex items-center justify-center gap-2 mb-8">
           <HeartHandshake className="h-8 w-8 text-pink-500" />
           <h1 className="text-3xl font-bold text-center">Bildkreatören</h1>
@@ -443,8 +401,8 @@ export default function ImageGenerator() {
         )}
 
         {/* Images grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {data?.images.map((image) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {data?.images.map((image) => (
             <Card
               key={image.id}
               className="overflow-hidden hover:shadow-lg transition-shadow duration-200 border-pink-100 dark:border-pink-900"
