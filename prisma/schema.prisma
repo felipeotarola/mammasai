@@ -16,6 +16,15 @@ model Image {
   updatedAt DateTime @updatedAt
 }
 
+model Video {
+  id        String   @id @default(cuid())
+  prompt    String   // The prompt used to generate the video
+  videoUrl  String   // This will store the Vercel Blob URL for the generated video
+  blobId    String   // Store the Blob ID for potential deletion later
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model StyleTemplate {
   id          String   @id @default(cuid())
   name        String
