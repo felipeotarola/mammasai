@@ -26,11 +26,6 @@ const items = [
     icon: Settings,
     href: "/video-generator",
   },
-  {
-    title: "Video Editor",
-    icon: Settings,
-    href: "/editor",
-  },
 ]
 
 export function AppSidebar() {
