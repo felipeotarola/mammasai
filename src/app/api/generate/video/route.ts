@@ -51,12 +51,12 @@ export async function POST(req: Request) {
 
     // Run the video-generation model on Replicate with a timeout.
     const generatePromise = replicate.run("minimax/video-01-live", { input })
+    console.log("Running Replicate model..." + generatePromise)
     const videoOutputStream = await withTimeout(generatePromise, TIMEOUT_MILLIS)
 
     // Convert the ReadableStream output into text.
     const streamResponse = new Response(videoOutputStream as ReadableStream)
     const textOutput = await streamResponse.text()
-    console.log("Raw text output from Replicate:", textOutput)
 
     // Parse the output (expecting JSON with an "output" property)
     let parsedOutput: any
@@ -71,8 +71,6 @@ export async function POST(req: Request) {
     if (typeof videoUrl !== "string") {
       throw new Error("Video generation output is not a valid URL string.")
     }
-
-    console.log("Video generated:", videoUrl)
 
     // Fetch the video and convert it to a buffer for uploading to Vercel Blob.
     const response = await fetch(videoUrl)
