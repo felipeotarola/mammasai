@@ -32,8 +32,8 @@ interface GeneratedVideos {
 const ENCOURAGING_MESSAGES = [
   "Skapar något vackert åt dig...",
   "Låt kreativiteten flöda...",
-  "Din bild är på väg...",
-  "Målar din vision...",
+  "Din video är på väg...",
+  "Renderar din vision...",
   "Nästan klar...",
 ];
 
