@@ -1,74 +1,85 @@
-"use client"
+"use client";
 
-import { useState, useRef } from "react"
-import useSWR from "swr"
-import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Slider } from "@/components/ui/slider"
-import { ChevronRight, Play, Pause, Plus, Minus, Scissors, Timer, GripVertical, Trash2 } from 'lucide-react'
+import type React from "react";
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json())
+import { useState, useRef } from "react";
+import useSWR from "swr";
+import type { DropResult } from "@hello-pangea/dnd";
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Play,
+  Pause,
+  Plus,
+  Minus,
+  Scissors,
+  Timer,
+  GripVertical,
+  Trash2,
+} from "lucide-react";
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 interface Video {
-  id: string
-  prompt: string
-  videoUrl: string
-  createdAt: string
-  duration?: number // in seconds
+  id: string;
+  prompt: string;
+  videoUrl: string;
+  createdAt: string;
+  duration?: number; // in seconds
 }
 
 export default function EditorPage() {
-  const { data: videoData } = useSWR<{ videos: Video[] }>("/api/generate/video", fetcher)
-  const [selectedVideos, setSelectedVideos] = useState<Video[]>([])
-  const [currentTime, setCurrentTime] = useState(0)
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [zoomLevel, setZoomLevel] = useState(1)
-  const [selectedVideoIndex, setSelectedVideoIndex] = useState<number | null>(null)
-  const previewRef = useRef<HTMLVideoElement>(null)
+  const { data: videoData } = useSWR<{ videos: Video[] }>("/api/generate/video", fetcher);
+  const [selectedVideos, setSelectedVideos] = useState<Video[]>([]);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [selectedVideoIndex, setSelectedVideoIndex] = useState<number | null>(null);
+  const previewRef = useRef<HTMLVideoElement>(null);
 
   const togglePlay = () => {
     if (previewRef.current) {
       if (isPlaying) {
-        previewRef.current.pause()
+        previewRef.current.pause();
       } else {
-        previewRef.current.play()
+        previewRef.current.play();
       }
-      setIsPlaying(!isPlaying)
+      setIsPlaying(!isPlaying);
     }
-  }
+  };
 
   const handleTimelineClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    const timeline = e.currentTarget
-    const rect = timeline.getBoundingClientRect()
-    const x = e.clientX - rect.left
-    const percentage = x / rect.width
-    const totalDuration = selectedVideos.reduce((acc, video) => acc + (video.duration || 0), 0)
-    setCurrentTime(percentage * totalDuration)
-  }
+    const timeline = e.currentTarget;
+    const rect = timeline.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const percentage = x / rect.width;
+    const totalDuration = selectedVideos.reduce((acc, video) => acc + (video.duration || 0), 0);
+    setCurrentTime(percentage * totalDuration);
+  };
 
-  const onDragEnd = (result: any) => {
-    if (!result.destination) return
+  const onDragEnd = (result: DropResult) => {
+    if (!result.destination) return;
 
-    const items = Array.from(selectedVideos)
-    const [reorderedItem] = items.splice(result.source.index, 1)
-    items.splice(result.destination.index, 0, reorderedItem)
+    const items = Array.from(selectedVideos);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
 
-    setSelectedVideos(items)
-  }
+    setSelectedVideos(items);
+  };
 
   const removeVideo = (index: number) => {
-    setSelectedVideos(selectedVideos.filter((_, i) => i !== index))
+    setSelectedVideos(selectedVideos.filter((_, i) => i !== index));
     if (selectedVideoIndex === index) {
-      setSelectedVideoIndex(null)
+      setSelectedVideoIndex(null);
     }
-  }
+  };
 
   const addVideo = (video: Video) => {
     if (!selectedVideos.find((v) => v.id === video.id)) {
-      setSelectedVideos([...selectedVideos, { ...video, duration: 10 }]) // Example duration
+      setSelectedVideos([...selectedVideos, { ...video, duration: 10 }]); // Example duration
     }
-  }
+  };
 
   return (
     <div className="container mx-auto max-w-7xl py-6">
@@ -117,7 +128,8 @@ export default function EditorPage() {
           <div className="flex items-center gap-2">
             <Timer className="h-4 w-4" />
             <span className="font-mono">
-              {Math.floor(currentTime / 60)}:{String(Math.floor(currentTime % 60)).padStart(2, "0")}
+              {Math.floor(currentTime / 60)}:
+              {String(Math.floor(currentTime % 60)).padStart(2, "0")}
             </span>
           </div>
         </div>
@@ -130,10 +142,10 @@ export default function EditorPage() {
               <span key={i}>{i}s</span>
             ))}
           </div>
-          
+
           {/* Timeline tracks */}
           <DragDropContext onDragEnd={onDragEnd}>
-            <Droppable droppableId="timeline">
+            <Droppable droppableId="timeline" direction="vertical">
               {(provided) => (
                 <div
                   {...provided.droppableProps}
@@ -143,7 +155,7 @@ export default function EditorPage() {
                 >
                   {selectedVideos.map((video, index) => (
                     <Draggable key={video.id} draggableId={video.id} index={index}>
-                      {(provided) => (
+                      {(provided, snapshot) => (
                         <div
                           ref={provided.innerRef}
                           {...provided.draggableProps}
@@ -186,7 +198,11 @@ export default function EditorPage() {
           <div
             className="absolute top-0 w-px h-full bg-primary"
             style={{
-              left: `${(currentTime / (selectedVideos.reduce((acc, video) => acc + (video.duration || 0), 0))) * 100}%`,
+              left: `${
+                (currentTime /
+                  selectedVideos.reduce((acc, video) => acc + (video.duration || 0), 0)) *
+                100
+              }%`,
             }}
           />
         </div>
@@ -218,5 +234,5 @@ export default function EditorPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
