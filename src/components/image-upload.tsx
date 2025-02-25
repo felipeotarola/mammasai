@@ -1,87 +1,99 @@
 "use client"
-import { useDropzone } from "react-dropzone"
-import { X } from "lucide-react"
 
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
+import type React from "react"
+
+import { useState, useCallback } from "react"
 
 interface ImageUploadProps {
   value: string | null
-  onChange: (file: File) => void
+  onChange: (file: File | null) => void
   onRemove: () => void
-  className?: string
 }
 
-export function ImageUpload({ value, onChange, onRemove, className }: ImageUploadProps) {
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    accept: {
-      "image/*": [".png", ".jpg", ".jpeg", ".gif"],
-    },
-    maxFiles: 1,
-    onDrop: (acceptedFiles) => {
-      if (acceptedFiles.length > 0) {
-        onChange(acceptedFiles[0])
+export const ImageUpload: React.FC<ImageUploadProps> = ({ value, onChange, onRemove }) => {
+  const [isDragging, setIsDragging] = useState(false)
+
+  const handleDrop = useCallback(
+    (event: React.DragEvent<HTMLDivElement>) => {
+      event.preventDefault()
+      setIsDragging(false)
+
+      const files = event.dataTransfer.files
+      if (files && files.length > 0) {
+        onChange(files[0])
       }
     },
-  })
+    [onChange],
+  )
+
+  const handleDragOver = useCallback((event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault()
+    setIsDragging(true)
+  }, [])
+
+  const handleDragLeave = useCallback((event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault()
+    setIsDragging(false)
+  }, [])
+
+  const handleChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const files = event.target.files
+      if (files && files.length > 0) {
+        onChange(files[0])
+      }
+    },
+    [onChange],
+  )
 
   return (
-    <div className={cn("space-y-4", className)}>
-      <div
-        {...getRootProps()}
-        className={cn(
-          "relative flex min-h-[200px] cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed transition-colors",
-          isDragActive && "border-primary/50 bg-primary/5",
-          value && "border-primary/50 bg-primary/5",
-        )}
-      >
-        <input {...getInputProps()} />
-        {value ? (
-          <>
-            <div className="absolute right-2 top-2 z-10">
-              <Button
-                type="button"
-                variant="secondary"
-                size="icon"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onRemove()
-                }}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <img src={value || "/placeholder.svg"} alt="Preview" className="h-full w-full rounded-lg object-cover" />
-          </>
-        ) : (
-          <div className="flex flex-col items-center justify-center space-y-2 p-4 text-center">
-            <div className="flex items-center justify-center rounded-full border bg-background p-4">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
+    <div
+      className={`relative border-2 border-dashed rounded-md p-4 ${
+        isDragging ? "border-pink-500" : "border-gray-300 dark:border-gray-700"
+      }`}
+      onDrop={handleDrop}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+    >
+      {value ? (
+        <div className="relative aspect-square w-full">
+          <img src={value || "/placeholder.svg"} alt="Uploaded" className="object-cover rounded-md w-full h-full" />
+          <button
+            type="button"
+            onClick={onRemove}
+            className="absolute top-2 right-2 bg-gray-800 text-white rounded-full p-1 hover:bg-gray-700"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+              <path
+                fillRule="evenodd"
+                d="M5.47 5.47a.75.75 0 011.06 0L12 10.94l5.47-5.47a.75.75 0 111.06 1.06L13.06 12l5.47 5.47a.75.75 0 11-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 01-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 010-1.06z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </button>
+        </div>
+      ) : (
+        <>
+          <label htmlFor="file-upload" className="flex flex-col items-center justify-center h-48 cursor-pointer">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="w-6 h-6 text-gray-500"
+            >
+              <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                className="h-6 w-6"
-              >
-                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7" />
-                <line x1="16" x2="22" y1="5" y2="5" />
-                <line x1="19" x2="19" y1="2" y2="8" />
-                <circle cx="9" cy="9" r="2" />
-                <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
-              </svg>
-            </div>
-            <div className="text-sm font-medium">
-              {isDragActive ? "Drop the image here" : "Drag & drop an image here"}
-            </div>
-            <div className="text-xs text-muted-foreground">Or click to select a file</div>
-          </div>
-        )}
-      </div>
+                d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.854-6.354l1.511-1.512a.75.75 0 011.06 1.06l-1.512 1.512a3 3 0 001.224 4.243M16.5 19.5a4.5 4.5 0 001.854-6.354l-1.511-1.512a.75.75 0 00-1.06 1.06l1.512 1.512a3 3 0 01-1.224 4.243"
+              />
+            </svg>
+            <p className="text-gray-500">{isDragging ? "Drop here" : "Click to upload or drag and drop"}</p>
+          </label>
+          <input id="file-upload" type="file" className="hidden" onChange={handleChange} />
+        </>
+      )}
     </div>
   )
 }
