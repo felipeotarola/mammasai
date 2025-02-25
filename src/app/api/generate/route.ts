@@ -2,6 +2,8 @@ import { experimental_generateImage as generateImage } from "ai"
 import { openai } from "@ai-sdk/openai"
 import { PrismaClient } from "@prisma/client"
 import { put } from "@vercel/blob"
+import { replicate } from "@ai-sdk/replicate";
+import { fireworks } from "@ai-sdk/fireworks";
 
 const prisma = new PrismaClient()
 
@@ -41,7 +43,8 @@ export async function POST(req: Request) {
 
     // Wrap the image generation with a timeout
     const generatePromise = generateImage({
-      model: openai.image("dall-e-3"),
+      // model: fireworks.image('accounts/fireworks/models/flux-1-dev-fp8'),
+      model: openai.image('dall-e-3'),
       prompt: combinedPrompt,
       size: "1024x1024",
     }).then(({ image, warnings }) => {
