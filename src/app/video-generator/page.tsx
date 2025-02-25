@@ -18,12 +18,13 @@ interface GeneratedImage {
   createdAt: string
 }
 
-interface GeneratedVideos{
-    id: string
-    prompt: string
-    videoUrl: string
-    createdAt: string
-  }
+interface GeneratedVideos {
+  id: string
+  prompt: string
+  videoUrl: string
+  createdAt: string
+}
+
 export default function GeneratePage() {
   // image state can be a File (from upload) or a string (URL from the grid)
   const [image, setImage] = useState<File | string | null>(null)
@@ -35,21 +36,38 @@ export default function GeneratePage() {
     revalidateOnFocus: false,
   })
 
-  const { data : videodata } = useSWR<{ videos: GeneratedVideos[] }>("/api/generate/video", fetcher, {
+  const { data: videodata } = useSWR<{ videos: GeneratedVideos[] }>("/api/generate/video", fetcher, {
     refreshInterval: 0,
     revalidateOnFocus: false,
   })
 
+  // Helper: convert a File to a data URL using FileReader
+  const fileToDataUrl = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(reader.result as string)
+      reader.onerror = (error) => reject(error)
+      reader.readAsDataURL(file)
+    })
+  }
+
   const handleGenerate = async () => {
-    // We need a URL for firstFrameImage.
     if (!image) return
-    if (typeof image !== "string") {
-      alert("Please drag and drop an image from the grid to generate a video.")
-      return
-    }
 
     setLoading(true)
     try {
+      // Determine the firstFrameImage URL.
+      let firstFrameImage: string
+
+      // If the image is a File, convert it to a data URL.
+      if (typeof image !== "string") {
+        firstFrameImage = await fileToDataUrl(image)
+      } else {
+        // Otherwise, image is already a URL (from dragging the grid)
+        firstFrameImage = image
+      }
+
+      // Now, generate the video using the determined URL.
       const response = await fetch("/api/generate/video", {
         method: "POST",
         headers: {
@@ -58,12 +76,13 @@ export default function GeneratePage() {
         body: JSON.stringify({
           prompt: text,
           systemPrompt: "",
-          firstFrameImage: image, // should be a URL string from the grid
+          firstFrameImage, // Use the data URL or the grid URL
         }),
       })
+
       const result = await response.json()
       console.log("Video generated:", result)
-      // Optionally, update the SWR cache or UI to show the new video record.
+      // Optionally, update your UI or SWR cache here.
     } catch (error) {
       console.error("Error generating video:", error)
     } finally {
@@ -128,31 +147,30 @@ export default function GeneratePage() {
           </Button>
         </CardFooter>
       </Card>
-     {/* Video grid */}
-<div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-  {videodata?.videos.map((video) => (
-    <Card
-      key={video.id}
-      draggable
-      onDragStart={(e) => {
-        // Set our custom data transfer field with the video URL.
-        e.dataTransfer.setData("videoUrl", video.videoUrl)
-      }}
-    >
-      <CardContent>
-        <video controls className="w-full h-48 rounded-lg object-cover">
-          <source src={video.videoUrl} type="video/mp4" />
-          Your browser does not support the video tag.
-        </video>
-      </CardContent>
-      <CardFooter>
-        <CardTitle>{video.id}</CardTitle>
-        <CardDescription>{new Date(video.createdAt).toLocaleString()}</CardDescription>
-      </CardFooter>
-    </Card>
-  ))}
-</div>
-
+      {/* Video grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+        {videodata?.videos.map((video) => (
+          <Card
+            key={video.id}
+            draggable
+            onDragStart={(e) => {
+              // Set our custom data transfer field with the video URL.
+              e.dataTransfer.setData("videoUrl", video.videoUrl)
+            }}
+          >
+            <CardContent>
+              <video controls className="w-full h-48 rounded-lg object-cover">
+                <source src={video.videoUrl} type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
+            </CardContent>
+            <CardFooter>
+              <CardTitle>{video.id}</CardTitle>
+              <CardDescription>{new Date(video.createdAt).toLocaleString()}</CardDescription>
+            </CardFooter>
+          </Card>
+        ))}
+      </div>
       {/* Images grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
         {data?.images.map((img) => (
