@@ -10,8 +10,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import {
   Loader2,
   Wand2,
-  ChevronDown,
-  ChevronUp,
   Settings2,
   HeartHandshake,
   Sparkles,
@@ -49,6 +47,8 @@ import {
 } from "@/components/ui/dialog";
 import { Download, Expand } from "lucide-react";
 import { toast } from "sonner";
+import ImageGrid from "@/components/image-grid";
+import MediaGrid from "@/components/media-grid";
 
 interface GeneratedImage {
   id: string;
@@ -105,14 +105,13 @@ export default function ImageGenerator() {
     null
   );
 
-  const {
-    data,
-    isLoading,
-    error: fetchError,
-  } = useSWR<{ images: GeneratedImage[] }>("/api/generate", fetcher, {
-    refreshInterval: 0,
-    revalidateOnFocus: false,
-  });
+  const handleImageExpand = (image: {
+    id: string;
+    url: string;
+    prompt: string;
+  }) => {
+    setExpandedImage(image);
+  };
 
   const { data: customTemplates } = useSWR<{ templates: StyleTemplate[] }>(
     "/api/style-templates",
@@ -386,148 +385,7 @@ export default function ImageGenerator() {
           </CardContent>
         </Card>
 
-        {/* Loading state */}
-        {isLoading && (
-          <div className="flex justify-center items-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin text-pink-500" />
-          </div>
-        )}
-
-        {/* Error state */}
-        {fetchError && (
-          <div className="text-center py-8 text-red-500">
-            Kunde inte ladda bilderna. Försök uppdatera sidan.
-          </div>
-        )}
-
-        {/* Images grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {data?.images.map((image) => (
-            <Card
-              key={image.id}
-              className="overflow-hidden hover:shadow-lg transition-shadow duration-200 border-pink-100 dark:border-pink-900"
-            >
-              <CardContent className="p-2">
-                <div className="relative aspect-square group">
-                  <Image
-                    src={image.imageUrl || "/placeholder.svg"}
-                    alt={image.prompt}
-                    fill
-                    className="object-cover rounded-lg cursor-pointer transition-transform duration-200 group-hover:scale-[1.02]"
-                    onClick={() =>
-                      setExpandedImage({
-                        id: image.id,
-                        url: image.imageUrl,
-                        prompt: image.prompt,
-                      })
-                    }
-                  />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200 rounded-lg" />
-                  <div className="absolute bottom-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="secondary"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDownload(image.imageUrl, image.prompt);
-                            }}
-                          >
-                            <Download className="h-4 w-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Ladda ner bild</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="secondary"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() =>
-                              setExpandedImage({
-                                id: image.id,
-                                url: image.imageUrl,
-                                prompt: image.prompt,
-                              })
-                            }
-                          >
-                            <Expand className="h-4 w-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Visa större bild</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="destructive"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDelete(image.id);
-                            }}
-                          >
-                            <Trash className="h-4 w-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Ta bort bild</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                </div>
-
-                <Collapsible open={expandedPrompts[image.id]}>
-                  <div className="flex items-center justify-between p-2">
-                    <p className="text-sm text-muted-foreground line-clamp-1 flex-1 mr-2">
-                      {image.prompt}
-                    </p>
-                    <CollapsibleTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => togglePrompt(image.id)}
-                      >
-                        {expandedPrompts[image.id] ? (
-                          <ChevronUp className="h-4 w-4" />
-                        ) : (
-                          <ChevronDown className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </CollapsibleTrigger>
-                  </div>
-                  <CollapsibleContent className="px-2 pb-2">
-                    <p className="text-sm text-muted-foreground">
-                      {image.prompt}
-                    </p>
-                  </CollapsibleContent>
-                </Collapsible>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {/* Empty state */}
-        {data?.images.length === 0 && (
-          <div className="text-center py-8 text-muted-foreground">
-            Inga bilder skapade än. Prova att skapa din första!
-          </div>
-        )}
+        <MediaGrid />
       </div>
       <Dialog
         open={!!expandedImage}
