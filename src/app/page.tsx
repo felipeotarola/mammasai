@@ -47,7 +47,6 @@ import {
 } from "@/components/ui/dialog";
 import { Download, Expand } from "lucide-react";
 import { toast } from "sonner";
-import ImageGrid from "@/components/image-grid";
 import MediaGrid from "@/components/media-grid";
 
 interface GeneratedImage {
@@ -105,14 +104,6 @@ export default function ImageGenerator() {
     null
   );
 
-  const handleImageExpand = (image: {
-    id: string;
-    url: string;
-    prompt: string;
-  }) => {
-    setExpandedImage(image);
-  };
-
   const { data: customTemplates } = useSWR<{ templates: StyleTemplate[] }>(
     "/api/style-templates",
     fetcher
@@ -160,23 +151,6 @@ export default function ImageGenerator() {
       return () => clearInterval(interval);
     }
   }, [isGenerating]);
-
-  const handleDelete = async (id: string) => {
-    if (!confirm("Är du säker på att du vill ta bort denna mall?")) return;
-
-    try {
-      const response = await fetch(`/api/images/${id}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) throw new Error("Något gick fel");
-      mutate("/api/generate");
-      toast.success("Bilden har tagits bort!");
-      mutate("/api/style-templates");
-    } catch (error) {
-      toast.error("Kunde inte ta bort bilden. Försök igen.");
-    }
-  };
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

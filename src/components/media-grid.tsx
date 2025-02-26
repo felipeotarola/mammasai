@@ -30,6 +30,7 @@ export interface GeneratedImage {
 }
 
 export interface GeneratedVideo {
+  modelName: string
   id: string
   prompt: string
   videoUrl: string
@@ -203,6 +204,9 @@ const MediaGrid: React.FC = () => {
                   </CardTitle>
                   <CardDescription className="text-xs text-gray-500 dark:text-gray-400">
                     {new Date(video.createdAt).toLocaleString()}
+                  </CardDescription>
+                  <CardDescription className="text-xs text-gray-500 dark:text-gray-400">
+                    {video.modelName}
                   </CardDescription>
                 </div>
               </CardFooter>

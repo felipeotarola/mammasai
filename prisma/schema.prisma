@@ -21,6 +21,7 @@ model Video {
   prompt    String   // The prompt used to generate the video
   videoUrl  String   // This will store the Vercel Blob URL for the generated video
   blobId    String   // Store the Blob ID for potential deletion later
+    modelName   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -33,4 +34,5 @@ model StyleTemplate {
   isDefault   Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
 }

@@ -40,23 +40,38 @@ function logShort(label: string, message: string) {
 
 export async function POST(req: Request) {
   try {
-    // Expecting prompt, systemPrompt, and firstFrameImage (URL) in the request body.
-    const { prompt, systemPrompt, firstFrameImage } = await req.json();
+    // Expecting prompt, systemPrompt, firstFrameImage (URL), and modelChoice in the request body.
+    const { prompt, systemPrompt, firstFrameImage, modelChoice } = await req.json();
     const combinedPrompt = systemPrompt ? `${systemPrompt} Create this: ${prompt}` : prompt;
 
     console.log("Generating video with prompt:", combinedPrompt);
+    
+    let input: any;
+    let modelName: `${string}/${string}`;
+    
+    // Choose the model based on the `modelChoice` parameter.
+    // For example, "minimax" for minimax/video-01-live or "kling" for kwaivgi/kling-v1.6-pro.
+    if (modelChoice === "kling") {
+      modelName = "kwaivgi/kling-v1.6-pro";
+      input = {
+        prompt: combinedPrompt,
+        // For the kling model, use `start_image` instead of `first_frame_image`
+        start_image: firstFrameImage,
+      };
+    } else {
+      // Default to the minimax model
+      modelName = "minimax/video-01-live";
+      input = {
+        prompt: combinedPrompt,
+        prompt_optimizer: true,
+        first_frame_image: firstFrameImage,
+      };
+    }
+    
+    logShort("Running Replicate model:", `${modelName} with input: ${JSON.stringify(input)}`);
 
-    // Setup input for the Replicate model.
-    const input = {
-      prompt: combinedPrompt,
-      prompt_optimizer: true,
-      first_frame_image: firstFrameImage, // URL string for the first frame image.
-    };
-
-    logShort("Running Replicate model with input:", JSON.stringify(input));
-
-    // Run the video-generation model on Replicate with a timeout.
-    const generatePromise = replicate.run("minimax/video-01-live", { input });
+    // Run the selected video-generation model on Replicate with a timeout.
+    const generatePromise = replicate.run(modelName, { input });
     const replicateOutput = await withTimeout(generatePromise, TIMEOUT_MILLIS);
     logShort("Replicate output:", typeof replicateOutput === "string" ? replicateOutput : "[Object with .url()]");
 
@@ -96,6 +111,7 @@ export async function POST(req: Request) {
         prompt: combinedPrompt,
         videoUrl: url,
         blobId: pathname,
+        modelName: modelChoice,
       },
     });
 
@@ -122,26 +138,25 @@ export async function POST(req: Request) {
 }
 
 export async function GET() {
-    try {
-      const videos = await prisma.video.findMany({
-        orderBy: {
-          createdAt: "desc",
-        },
-      })
-  
-      return new Response(JSON.stringify({ videos }), {
-        status: 200,
+  try {
+    const videos = await prisma.video.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    return new Response(JSON.stringify({ videos }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (error) {
+    console.error("Error fetching videos:", error);
+    return new Response(
+      JSON.stringify({ error: "Failed to fetch videos" }),
+      {
+        status: 500,
         headers: { "Content-Type": "application/json" },
-      })
-    } catch (error) {
-      console.error("Error fetching videos:", error)
-      return new Response(
-        JSON.stringify({ error: "Failed to fetch videos" }),
-        {
-          status: 500,
-          headers: { "Content-Type": "application/json" },
-        }
-      )
-    }
+      }
+    );
   }
-  
+}
