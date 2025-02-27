@@ -1,6 +1,6 @@
 "use client"
 
-import { Home, Settings, Users } from "lucide-react"
+import { Film, Home, ImagePlus, Palette } from "lucide-react"
 import {
   Sidebar,
   SidebarContent,
@@ -17,14 +17,19 @@ const items = [
     href: "/",
   },
   {
-    title: "Hantera Stilmallar",
-    icon: Users,
-    href: "/style-templates",
+    title: "Video Generator",
+    icon: Film,
+    href: "/generate/videos",
   },
   {
-    title: "Video Generator",
-    icon: Settings,
-    href: "/video-generator",
+    title: "Bild Generator",
+    icon: ImagePlus,
+    href: "/generate/images",
+  },
+  {
+    title: "Hantera Stilmallar",
+    icon: Palette,
+    href: "/style-templates",
   },
 ]
 
@@ -49,7 +54,6 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarContent>
     </Sidebar>
-    
   )
 }
 

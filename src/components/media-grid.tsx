@@ -17,6 +17,14 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { toast } from "sonner"
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination"
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
@@ -33,6 +41,16 @@ export interface GeneratedVideo {
   prompt: string
   videoUrl: string
   createdAt: string
+}
+
+interface PaginatedImages {
+  images: GeneratedImage[]
+  totalPages: number
+}
+
+interface PaginatedVideos {
+  videos: GeneratedVideo[]
+  totalPages: number
 }
 
 interface MediaGridProps {
@@ -52,14 +70,19 @@ const MediaGrid: React.FC<MediaGridProps> = ({ tab = "videos" }) => {
     id: string
   } | null>(null)
 
-  // Fetch images and videos separately.
-  const { data: imageData, isLoading: imagesLoading } = useSWR<{ images: GeneratedImage[] }>("/api/generate/images", fetcher, {
-    refreshInterval: 0,
-    revalidateOnFocus: false,
-  })
+  // Pagination state for images and videos.
+  const [imagePage, setImagePage] = useState(1)
+  const [videoPage, setVideoPage] = useState(1)
 
-  const { data: videoData, isLoading: videosLoading } = useSWR<{ videos: GeneratedVideo[] }>(
-    "/api/generate/videos",
+  // Fetch images and videos with pagination.
+  const { data: imageData, isLoading: imagesLoading } = useSWR<PaginatedImages>(
+    `/api/generate/images?page=${imagePage}`,
+    fetcher,
+    { refreshInterval: 0, revalidateOnFocus: false },
+  )
+
+  const { data: videoData, isLoading: videosLoading } = useSWR<PaginatedVideos>(
+    `/api/generate/videos?page=${videoPage}`,
     fetcher,
     { refreshInterval: 0, revalidateOnFocus: false },
   )
@@ -79,20 +102,22 @@ const MediaGrid: React.FC<MediaGridProps> = ({ tab = "videos" }) => {
         throw new Error(`Failed to delete ${type}`)
       }
 
-      // Update the cache
+      // Update the cache for the respective endpoint.
       if (type === "image") {
         mutate(
-          "/api/generate/images",
+          `/api/generate/images?page=${imagePage}`,
           {
             images: imageData?.images.filter((img) => img.id !== id),
+            totalPages: imageData?.totalPages,
           },
           false,
         )
       } else {
         mutate(
-          "/api/generate/videos",
+          `/api/generate/videos?page=${videoPage}`,
           {
             videos: videoData?.videos.filter((video) => video.id !== id),
+            totalPages: videoData?.totalPages,
           },
           false,
         )
@@ -143,50 +168,22 @@ const MediaGrid: React.FC<MediaGridProps> = ({ tab = "videos" }) => {
 
       {/* Video grid (if filter is not "images") */}
       {filter !== "images" && videoData?.videos && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-6">
-          {videoData.videos.map((video) => (
-            <Card
-              key={video.id}
-              draggable
-              onDragStart={(e) => {
-                e.dataTransfer.setData("videoUrl", video.videoUrl)
-              }}
-              className="group overflow-hidden hover:shadow-xl transition-all duration-300 border-pink-100 dark:border-pink-900 hover:border-pink-300 dark:hover:border-pink-700 relative"
-            >
-              <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                <Button
-                  variant="secondary"
-                  size="icon"
-                  className="h-8 w-8 rounded-full bg-black/50 hover:bg-black/70 text-white"
-                  onClick={() =>
-                    setExpandedMedia({
-                      type: "video",
-                      url: video.videoUrl,
-                      prompt: video.prompt,
-                    })
-                  }
-                >
-                  <Maximize2 className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="icon"
-                  className="h-8 w-8 rounded-full bg-red-500/70 hover:bg-red-500/90 text-white"
-                  onClick={() =>
-                    setDeleteConfirm({
-                      type: "video",
-                      id: video.id,
-                    })
-                  }
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-              <CardContent className="p-3">
-                <div className="overflow-hidden rounded-lg">
-                  <video
-                    controls
-                    className="w-full h-48 rounded-lg object-cover transition-transform duration-300 group-hover:scale-105"
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-6">
+            {videoData.videos.map((video) => (
+              <Card
+                key={video.id}
+                draggable
+                onDragStart={(e) => {
+                  e.dataTransfer.setData("videoUrl", video.videoUrl)
+                }}
+                className="group overflow-hidden hover:shadow-xl transition-all duration-300 border-pink-100 dark:border-pink-900 hover:border-pink-300 dark:hover:border-pink-700 relative"
+              >
+                <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    className="h-8 w-8 rounded-full bg-black/50 hover:bg-black/70 text-white"
                     onClick={() =>
                       setExpandedMedia({
                         type: "video",
@@ -195,74 +192,114 @@ const MediaGrid: React.FC<MediaGridProps> = ({ tab = "videos" }) => {
                       })
                     }
                   >
-                    <source src={video.videoUrl} type="video/mp4" />
-                    Your browser does not support the video tag.
-                  </video>
+                    <Maximize2 className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    className="h-8 w-8 rounded-full bg-red-500/70 hover:bg-red-500/90 text-white"
+                    onClick={() =>
+                      setDeleteConfirm({
+                        type: "video",
+                        id: video.id,
+                      })
+                    }
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
-              </CardContent>
-              <CardFooter className="bg-gradient-to-r from-pink-50 to-purple-50 dark:from-pink-950/30 dark:to-purple-950/30 p-3">
-                <div className="space-y-1 w-full">
-                  <CardTitle className="text-sm font-semibold">
-                    <ScrollArea className="h-[60px]">{video.prompt}</ScrollArea>
-                  </CardTitle>
-                  <CardDescription className="text-xs text-gray-500 dark:text-gray-400">
-                    {new Date(video.createdAt).toLocaleString()}
-                  </CardDescription>
-                  <CardDescription className="text-xs text-gray-500 dark:text-gray-400">
-                    {video.modelName}
-                  </CardDescription>
-                </div>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
+                <CardContent className="p-3">
+                  <div className="overflow-hidden rounded-lg">
+                    <video
+                      controls
+                      className="w-full h-48 rounded-lg object-cover transition-transform duration-300 group-hover:scale-105"
+                      onClick={() =>
+                        setExpandedMedia({
+                          type: "video",
+                          url: video.videoUrl,
+                          prompt: video.prompt,
+                        })
+                      }
+                    >
+                      <source src={video.videoUrl} type="video/mp4" />
+                      Your browser does not support the video tag.
+                    </video>
+                  </div>
+                </CardContent>
+                <CardFooter className="bg-gradient-to-r from-pink-50 to-purple-50 dark:from-pink-950/30 dark:to-purple-950/30 p-3">
+                  <div className="space-y-1 w-full">
+                    <CardTitle className="text-sm font-semibold">
+                      <ScrollArea className="h-[60px]">{video.prompt}</ScrollArea>
+                    </CardTitle>
+                    <CardDescription className="text-xs text-gray-500 dark:text-gray-400">
+                      {new Date(video.createdAt).toLocaleString()}
+                    </CardDescription>
+                    <CardDescription className="text-xs text-gray-500 dark:text-gray-400">
+                      {video.modelName}
+                    </CardDescription>
+                  </div>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+          {/* Video Pagination */}
+          <div className="flex justify-center mt-4">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={() =>
+                      setVideoPage((prev) => (prev > 1 ? prev - 1 : prev))
+                    }
+                  />
+                </PaginationItem>
+                {/* Render page numbers dynamically */}
+                {Array.from({ length: videoData.totalPages }).map((_, idx) => {
+                  const pageNumber = idx + 1
+                  return (
+                    <PaginationItem key={pageNumber}>
+                      <PaginationLink
+                        onClick={() => setVideoPage(pageNumber)}
+                        className={videoPage === pageNumber ? "bg-pink-500 text-white" : ""}
+                      >
+                        {pageNumber}
+                      </PaginationLink>
+                    </PaginationItem>
+                  )
+                })}
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() =>
+                      setVideoPage((prev) =>
+                        prev < videoData.totalPages ? prev + 1 : prev,
+                      )
+                    }
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        </>
       )}
 
       {/* Image grid (if filter is not "videos") */}
       {filter !== "videos" && imageData?.images && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-6">
-          {imageData.images.map((img) => (
-            <Card
-              key={img.id}
-              draggable
-              onDragStart={(e) => {
-                e.dataTransfer.setData("imageUrl", img.imageUrl)
-              }}
-              className="group overflow-hidden hover:shadow-xl transition-all duration-300 border-pink-100 dark:border-pink-900 hover:border-pink-300 dark:hover:border-pink-700 relative"
-            >
-              <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                <Button
-                  variant="secondary"
-                  size="icon"
-                  className="h-8 w-8 rounded-full bg-black/50 hover:bg-black/70 text-white"
-                  onClick={() =>
-                    setExpandedMedia({
-                      type: "image",
-                      url: img.imageUrl,
-                      prompt: img.prompt,
-                    })
-                  }
-                >
-                  <Maximize2 className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="icon"
-                  className="h-8 w-8 rounded-full bg-red-500/70 hover:bg-red-500/90 text-white"
-                  onClick={() =>
-                    setDeleteConfirm({
-                      type: "image",
-                      id: img.id,
-                    })
-                  }
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-              <CardContent className="p-3">
-                <div className="overflow-hidden rounded-lg">
-                  <div
-                    className="relative aspect-square cursor-pointer"
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-6">
+            {imageData.images.map((img) => (
+              <Card
+                key={img.id}
+                draggable
+                onDragStart={(e) => {
+                  e.dataTransfer.setData("imageUrl", img.imageUrl)
+                }}
+                className="group overflow-hidden hover:shadow-xl transition-all duration-300 border-pink-100 dark:border-pink-900 hover:border-pink-300 dark:hover:border-pink-700 relative"
+              >
+                <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    className="h-8 w-8 rounded-full bg-black/50 hover:bg-black/70 text-white"
                     onClick={() =>
                       setExpandedMedia({
                         type: "image",
@@ -271,28 +308,93 @@ const MediaGrid: React.FC<MediaGridProps> = ({ tab = "videos" }) => {
                       })
                     }
                   >
-                    <Image
-                      src={img.imageUrl || "/placeholder.svg"}
-                      alt={img.prompt}
-                      fill
-                      className="object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
-                    />
+                    <Maximize2 className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    className="h-8 w-8 rounded-full bg-red-500/70 hover:bg-red-500/90 text-white"
+                    onClick={() =>
+                      setDeleteConfirm({
+                        type: "image",
+                        id: img.id,
+                      })
+                    }
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+                <CardContent className="p-3">
+                  <div className="overflow-hidden rounded-lg">
+                    <div
+                      className="relative aspect-square cursor-pointer"
+                      onClick={() =>
+                        setExpandedMedia({
+                          type: "image",
+                          url: img.imageUrl,
+                          prompt: img.prompt,
+                        })
+                      }
+                    >
+                      <Image
+                        src={img.imageUrl || "/placeholder.svg"}
+                        alt={img.prompt}
+                        fill
+                        className="object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
+                      />
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-              <CardFooter className="bg-gradient-to-r from-pink-50 to-purple-50 dark:from-pink-950/30 dark:to-purple-950/30 p-3">
-                <div className="space-y-1 w-full">
-                  <CardTitle className="text-sm font-semibold">
-                    <ScrollArea className="h-[60px]">{img.prompt}</ScrollArea>
-                  </CardTitle>
-                  <CardDescription className="text-xs text-gray-500 dark:text-gray-400">
-                    {new Date(img.createdAt).toLocaleString()}
-                  </CardDescription>
-                </div>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
+                </CardContent>
+                <CardFooter className="bg-gradient-to-r from-pink-50 to-purple-50 dark:from-pink-950/30 dark:to-purple-950/30 p-3">
+                  <div className="space-y-1 w-full">
+                    <CardTitle className="text-sm font-semibold">
+                      <ScrollArea className="h-[60px]">{img.prompt}</ScrollArea>
+                    </CardTitle>
+                    <CardDescription className="text-xs text-gray-500 dark:text-gray-400">
+                      {new Date(img.createdAt).toLocaleString()}
+                    </CardDescription>
+                  </div>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+          {/* Image Pagination */}
+          <div className="flex justify-center mt-4">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={() =>
+                      setImagePage((prev) => (prev > 1 ? prev - 1 : prev))
+                    }
+                  />
+                </PaginationItem>
+                {Array.from({ length: imageData.totalPages }).map((_, idx) => {
+                  const pageNumber = idx + 1
+                  return (
+                    <PaginationItem key={pageNumber}>
+                      <PaginationLink
+                        onClick={() => setImagePage(pageNumber)}
+                        className={imagePage === pageNumber ? "bg-pink-500 text-white" : ""}
+                      >
+                        {pageNumber}
+                      </PaginationLink>
+                    </PaginationItem>
+                  )
+                })}
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() =>
+                      setImagePage((prev) =>
+                        prev < imageData.totalPages ? prev + 1 : prev,
+                      )
+                    }
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        </>
       )}
 
       {/* Expanded Media Modal */}
@@ -307,7 +409,6 @@ const MediaGrid: React.FC<MediaGridProps> = ({ tab = "videos" }) => {
             >
               <X className="h-5 w-5" />
             </Button>
-
             <div className="p-4">
               {expandedMedia.type === "image" ? (
                 <div className="relative w-full h-[70vh]">
@@ -324,7 +425,6 @@ const MediaGrid: React.FC<MediaGridProps> = ({ tab = "videos" }) => {
                   Your browser does not support the video tag.
                 </video>
               )}
-
               <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
                 <h3 className="font-medium text-lg mb-2">Prompt</h3>
                 <p className="text-gray-700 dark:text-gray-300">{expandedMedia.prompt}</p>
