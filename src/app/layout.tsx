@@ -5,6 +5,7 @@ import "./globals.css"
 
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
+import { Toaster } from "sonner"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -41,6 +42,8 @@ export default function RootLayout({
               </header>
               <main className="flex-1 overflow-y-auto bg-gradient-to-b from-pink-50 to-white dark:from-gray-900 dark:to-gray-950">
                 {children}
+                <Toaster />
+
               </main>
             </div>
           </SidebarInset>

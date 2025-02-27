@@ -1,5 +1,3 @@
-"use client"
-
 import type React from "react"
 import { useState } from "react"
 import useSWR, { mutate } from "swr"
@@ -37,8 +35,13 @@ export interface GeneratedVideo {
   createdAt: string
 }
 
-const MediaGrid: React.FC = () => {
-  const [filter, setFilter] = useState<"all" | "videos" | "images">("all")
+interface MediaGridProps {
+  tab?: "videos" | "images"
+}
+
+const MediaGrid: React.FC<MediaGridProps> = ({ tab = "videos" }) => {
+  // Use the prop value as the initial state for filtering.
+  const [filter, setFilter] = useState<"all" | "videos" | "images">(tab)
   const [expandedMedia, setExpandedMedia] = useState<{
     type: "image" | "video"
     url: string
@@ -353,4 +356,3 @@ const MediaGrid: React.FC = () => {
 }
 
 export default MediaGrid
-

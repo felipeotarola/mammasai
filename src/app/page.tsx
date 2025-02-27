@@ -45,16 +45,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Download, Expand } from "lucide-react";
-import { toast } from "sonner";
+import { Download } from "lucide-react";
 import MediaGrid from "@/components/media-grid";
-
-interface GeneratedImage {
-  id: string;
-  prompt: string;
-  imageUrl: string;
-  createdAt: string;
-}
 
 interface StyleTemplate {
   id: string;
@@ -109,12 +101,6 @@ export default function ImageGenerator() {
     fetcher
   );
 
-  const togglePrompt = (imageId: string) => {
-    setExpandedPrompts((prev) => ({
-      ...prev,
-      [imageId]: !prev[imageId],
-    }));
-  };
 
   const resetSystemPrompt = () => {
     setSystemPrompt(DEFAULT_SYSTEM_PROMPT);
@@ -359,8 +345,8 @@ export default function ImageGenerator() {
           </CardContent>
         </Card>
 
-        <MediaGrid />
-      </div>
+        <MediaGrid tab="images" />
+        </div>
       <Dialog
         open={!!expandedImage}
         onOpenChange={() => setExpandedImage(null)}
