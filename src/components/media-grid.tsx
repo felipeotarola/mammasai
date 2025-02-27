@@ -53,13 +53,13 @@ const MediaGrid: React.FC<MediaGridProps> = ({ tab = "videos" }) => {
   } | null>(null)
 
   // Fetch images and videos separately.
-  const { data: imageData, isLoading: imagesLoading } = useSWR<{ images: GeneratedImage[] }>("/api/generate", fetcher, {
+  const { data: imageData, isLoading: imagesLoading } = useSWR<{ images: GeneratedImage[] }>("/api/generate/images", fetcher, {
     refreshInterval: 0,
     revalidateOnFocus: false,
   })
 
   const { data: videoData, isLoading: videosLoading } = useSWR<{ videos: GeneratedVideo[] }>(
-    "/api/generate/video",
+    "/api/generate/videos",
     fetcher,
     { refreshInterval: 0, revalidateOnFocus: false },
   )
@@ -82,7 +82,7 @@ const MediaGrid: React.FC<MediaGridProps> = ({ tab = "videos" }) => {
       // Update the cache
       if (type === "image") {
         mutate(
-          "/api/generate",
+          "/api/generate/images",
           {
             images: imageData?.images.filter((img) => img.id !== id),
           },
@@ -90,7 +90,7 @@ const MediaGrid: React.FC<MediaGridProps> = ({ tab = "videos" }) => {
         )
       } else {
         mutate(
-          "/api/generate/video",
+          "/api/generate/videos",
           {
             videos: videoData?.videos.filter((video) => video.id !== id),
           },

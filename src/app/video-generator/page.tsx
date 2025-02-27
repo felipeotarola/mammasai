@@ -47,7 +47,7 @@ export default function GeneratePage() {
         modelChoice, // "minimax" or "kling"
       };
 
-      const response = await fetch("/api/generate/video", {
+      const response = await fetch("/api/generate/videos", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

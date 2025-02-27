@@ -145,7 +145,7 @@ export default function ImageGenerator() {
     setEncouragingMessageIndex(0);
 
     try {
-      const response = await fetch("/api/generate", {
+      const response = await fetch("/api/generate/images", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -161,7 +161,7 @@ export default function ImageGenerator() {
       }
 
       setPrompt("");
-      mutate("/api/generate");
+      mutate("/api/generate/images");
     } catch (err) {
       setError("Något gick fel. Försök igen.");
     } finally {
